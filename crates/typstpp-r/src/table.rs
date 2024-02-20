@@ -10,6 +10,25 @@ pub struct MarkdownTable {
     pub rows: Vec<Vec<String>>,
 }
 
+fn slash_aware_split(s: &str, c: char) -> Vec<String> {
+    let mut parts = Vec::new();
+    let mut part = String::new();
+    let mut escape = false;
+    for ch in s.chars() {
+        if ch == '\\' {
+            escape = true;
+        } else if ch == c && !escape {
+            parts.push(part);
+            part = String::new();
+        } else {
+            part.push(ch);
+            escape = false;
+        }
+    }
+    parts.push(part);
+    parts
+}
+
 impl MarkdownTable {
     pub fn parse(input: &str) -> Self {
         let mut headers = Vec::new();
@@ -43,7 +62,7 @@ impl MarkdownTable {
             aligns.push(align);
         }
         for line in lines {
-            let parts = line.split('|').collect::<Vec<_>>();
+            let parts = slash_aware_split(line, '|');
             let mut row = Vec::new();
             for (i, part) in parts.iter().enumerate() {
                 if i == 0 || i == parts.len() - 1 {

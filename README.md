@@ -45,5 +45,5 @@ See [example.out.pdf](example.out.pdf). For the final PDF output.
 
 ## TODO
 
-- [ ] Better kable parsing
+- [X] Better kable parsing
 - [ ] Inline code
