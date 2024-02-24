@@ -5,7 +5,10 @@ use std::{
 
 use crate::{io::InputFile, io::OutputFile};
 use source::CodeChunk;
-use tokio::io::{AsyncRead, AsyncWrite, AsyncWriteExt};
+use tokio::{
+    fs,
+    io::{AsyncRead, AsyncWrite, AsyncWriteExt},
+};
 use typstpp_backend::{Backend, Input};
 mod io;
 mod source;
@@ -129,26 +132,40 @@ pub async fn preprocess_typst<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
     while let Some(chunk) = input.read_chunk().await? {
         chunks.push(chunk);
     }
-    let code_chunks = chunks
-        .iter()
-        .filter_map(|c| match c {
-            source::Chunk::Code(c) => Some(c),
-            _ => None,
-        })
-        .collect::<Vec<_>>();
+    let code_chunks = chunks.iter_mut().filter_map(|c| match c {
+        source::Chunk::Code(c) => Some(c),
+        _ => None,
+    });
 
     let mut code_chunks_by_lang = HashMap::new();
-    for c in code_chunks.into_iter() {
+    for c in code_chunks {
+        if let Some(file) = c.options.get("file") {
+            c.code = fs::read_to_string(file).await?;
+        }
         code_chunks_by_lang
             .entry(c.lang.clone())
             .or_insert_with(Vec::new)
-            .push(c);
+            .push(&*c);
     }
     let mut code_outputs_by_lang = HashMap::new();
     for (lang, chunks) in code_chunks_by_lang {
         if let Some(backend) = driver.backends.get_mut(&lang) {
             let result = backend.preprocess(&chunks).await;
             code_outputs_by_lang.insert(lang.clone(), VecDeque::from(result));
+        } else {
+            code_outputs_by_lang.insert(
+                lang.clone(),
+                chunks
+                    .iter()
+                    .map(|c| CodeOutput {
+                        errors: vec![],
+                        outputs: vec![typstpp_backend::Output {
+                            data: c.code.clone(),
+                            ty: typstpp_backend::OutputType::Code,
+                        }],
+                    })
+                    .collect::<VecDeque<_>>(),
+            );
         }
     }
     for chunk in chunks {

@@ -1,7 +1,8 @@
-#let src(contents) = {
-  rect(
-    width: 100%,
-    fill: rgb("#ececec"),
-    [#contents]
-    )
+#let src(content) = {
+  block(
+    fill: rgb("#ececec"), 
+    inset: 1em,
+    breakable: true)[
+      #content
+  ]
 }

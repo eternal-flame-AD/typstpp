@@ -17,6 +17,7 @@ impl HsBackend {
 
 pub struct HsOptions {
     echo: bool,
+    eval: bool,
 }
 
 impl From<std::collections::HashMap<String, String>> for HsOptions {
@@ -24,6 +25,10 @@ impl From<std::collections::HashMap<String, String>> for HsOptions {
         HsOptions {
             echo: m
                 .get("echo")
+                .map(|s| s == "true" || s == "1" || s == "yes")
+                .unwrap_or(true),
+            eval: m
+                .get("eval")
                 .map(|s| s == "true" || s == "1" || s == "yes")
                 .unwrap_or(true),
         }
@@ -66,8 +71,10 @@ impl Backend for HsBackend {
             .stdin(Stdio::null())
             .stderr(Stdio::piped());
         for (i, input) in input.iter().enumerate() {
-            for line in input.source.lines() {
-                child.arg("-e").arg(line);
+            if input.options.eval {
+                for line in input.source.lines() {
+                    child.arg("-e").arg(line);
+                }
             }
             child.arg("-e").arg(format!("putStrLn \"{}\"", cookies[i]));
         }
@@ -128,7 +135,10 @@ mod tests {
         let mut backend = HsBackend::new(()).await.unwrap();
         let input = vec![Input {
             source: "putStrLn \"Hello, world!\"",
-            options: HsOptions { echo: true },
+            options: HsOptions {
+                echo: true,
+                eval: true,
+            },
         }];
         let outputs = backend.compile(input).await.unwrap();
         assert_eq!(

@@ -137,7 +137,7 @@ impl RBackend {
         };
         let result = transform_tables(&result);
         Ok(vec![typstpp_backend::Output {
-            data: result,
+            data: result.replace("```\n]\n#src[\n```r\n", ""),
             ty: typstpp_backend::OutputType::Typst,
         }])
     }
