@@ -45,7 +45,9 @@ impl Deref for RObj {
     }
 }
 
-pub struct RBackend;
+pub struct RBackend {
+    global_options: RGlobalOptions,
+}
 
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum Error {
@@ -83,11 +85,20 @@ impl RBackend {
 
     async fn pass<'a>(
         &mut self,
+        key: &str,
         input: typstpp_backend::Input<'a, <Self as Backend>::Options>,
     ) -> Result<
         Vec<typstpp_backend::Output<<Self as Backend>::Output>>,
         typstpp_backend::Error<<Self as Backend>::Error>,
     > {
+        if !key
+            .chars()
+            .all(|c| c.is_alphanumeric() || " -_".contains(c))
+        {
+            return Err(typstpp_backend::Error::BackendError(Error::RError(
+                "Key must be alphanumeric, space, hyphen, or underscore",
+            )));
+        }
         let knitr_char = unsafe { Rf_mkString("knitr\0".as_ptr() as *const i8) };
         let knitr = unsafe { R_FindNamespace(knitr_char) };
         let knitr = RObj::from(knitr);
@@ -117,6 +128,14 @@ impl RBackend {
                         .options
                         .message
                         .map(|b| format!("message={}", if b { "TRUE" } else { "FALSE" })),
+                    Some(
+                        self.global_options
+                            .figure_path_prefix
+                            .as_ref()
+                            .map(|s| s.as_str().strip_suffix('/').unwrap_or(s))
+                            .unwrap_or("figures"),
+                    )
+                    .map(|s| format!("fig.path='{}'", format!("{}/typstpp-{}-", s, key))),
                 ]
                 .into_iter()
                 .flatten()
@@ -172,6 +191,11 @@ pub struct ROptions {
     message: Option<bool>,
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct RGlobalOptions {
+    pub figure_path_prefix: Option<String>,
+}
+
 impl From<HashMap<String, String>> for ROptions {
     fn from(m: HashMap<String, String>) -> Self {
         ROptions {
@@ -189,7 +213,7 @@ static mut R_INITIALIZED: OnceCell<Result<(), typstpp_backend::Error<Error>>> =
 
 #[async_trait::async_trait]
 impl Backend for RBackend {
-    type GlobalOptions = ();
+    type GlobalOptions = RGlobalOptions;
     type Options = ROptions;
     type Output = String;
     type Error = Error;
@@ -270,7 +294,7 @@ impl Backend for RBackend {
                 .await
                 .as_ref()
                 .map_err(|e| e.clone())
-                .map(|_| RBackend {})
+                .map(|_| RBackend { global_options })
         }
     }
 
@@ -280,8 +304,8 @@ impl Backend for RBackend {
     ) -> Result<Vec<Vec<typstpp_backend::Output<Self::Output>>>, typstpp_backend::Error<Self::Error>>
     {
         let mut outputs = Vec::new();
-        for i in input {
-            outputs.push(self.pass(i).await?);
+        for (i, input) in input.into_iter().enumerate() {
+            outputs.push(self.pass(format!("chunk-{}", i).as_str(), input).await?);
         }
         Ok(outputs)
     }
@@ -325,62 +349,77 @@ mod tests {
     use typstpp_backend::Backend;
     #[tokio::test]
     async fn test_r_backend() {
-        let mut backend = RBackend::new(()).await.unwrap();
+        let mut backend = RBackend::new(RGlobalOptions::default())
+            .await
+            .expect("Failed to create R backend");
         let result = backend
-            .pass(typstpp_backend::Input {
-                source: "print('hello')".into(),
-                options: ROptions::default(),
-            })
+            .pass(
+                "test",
+                typstpp_backend::Input {
+                    source: "print('hello')".into(),
+                    options: ROptions::default(),
+                },
+            )
             .await
             .unwrap();
         assert_eq!(
             result,
             vec![typstpp_backend::Output {
-                data: "```r\nprint('hello')\n```\n```\n## [1] \"hello\"\n\n```\n\n".to_string(),
+                data: "#src[\n```r\nprint('hello')\n```\n]\n```\n## [1] \"hello\"\n\n```\n\n"
+                    .to_string(),
                 ty: typstpp_backend::OutputType::Typst,
             }]
         );
         let result = backend
-            .pass(typstpp_backend::Input {
-                source: "a <- 1+1\nprint(a)".into(),
-                options: ROptions::default(),
-            })
+            .pass(
+                "test",
+                typstpp_backend::Input {
+                    source: "a <- 1+1\nprint(a)".into(),
+                    options: ROptions::default(),
+                },
+            )
             .await
             .unwrap();
         assert_eq!(
             result,
             vec![typstpp_backend::Output {
-                data: "```r\na <- 1+1\n```\n```r\nprint(a)\n```\n```\n## [1] 2\n\n```\n\n"
+                data: "#src[\n```r\na <- 1+1\nprint(a)\n```\n]\n```\n## [1] 2\n\n```\n\n"
                     .to_string(),
                 ty: typstpp_backend::OutputType::Typst,
             }]
         );
 
         let result = backend
-            .pass(typstpp_backend::Input {
-                source: "a <- 1".into(),
-                options: ROptions::default(),
-            })
+            .pass(
+                "test",
+                typstpp_backend::Input {
+                    source: "a <- 1".into(),
+                    options: ROptions::default(),
+                },
+            )
             .await
             .unwrap();
         assert_eq!(
             result,
             vec![typstpp_backend::Output {
-                data: "```r\na <- 1\n```\n\n".to_string(),
+                data: "#src[\n```r\na <- 1\n```\n]\n\n".to_string(),
                 ty: typstpp_backend::OutputType::Typst,
             }]
         );
         let result = backend
-            .pass(typstpp_backend::Input {
-                source: "print(a)".into(),
-                options: ROptions::default(),
-            })
+            .pass(
+                "test",
+                typstpp_backend::Input {
+                    source: "print(a)".into(),
+                    options: ROptions::default(),
+                },
+            )
             .await
             .unwrap();
         assert_eq!(
             result,
             vec![typstpp_backend::Output {
-                data: "```r\nprint(a)\n```\n```\n## [1] 1\n\n```\n\n".to_string(),
+                data: "#src[\n```r\nprint(a)\n```\n]\n```\n## [1] 1\n\n```\n\n".to_string(),
                 ty: typstpp_backend::OutputType::Typst,
             }]
         );
@@ -388,13 +427,38 @@ mod tests {
         backend.reset().await.unwrap();
 
         let result = backend
-            .pass(typstpp_backend::Input {
-                source: "print(a)".into(),
-                options: ROptions::default(),
-            })
+            .pass(
+                "test",
+                typstpp_backend::Input {
+                    source: "print(a)".into(),
+                    options: ROptions::default(),
+                },
+            )
             .await
             .unwrap();
 
         assert!(result[0].data.contains("Error"))
+    }
+
+    #[tokio::test]
+    async fn test_r_graphics() {
+        let tmpdir = tempfile::tempdir().expect("Failed to create figure tempdir");
+        let mut backend = RBackend::new(RGlobalOptions {
+            figure_path_prefix: Some(tmpdir.path().to_str().unwrap().to_string()),
+        })
+        .await
+        .expect("Failed to create R backend");
+        let result = backend
+            .pass(
+                "test",
+                typstpp_backend::Input {
+                    source: "plot(1:10)\nprint('hello')\nplot(10:1)".into(),
+                    options: ROptions::default(),
+                },
+            )
+            .await
+            .unwrap();
+        assert!(result[0].ty == typstpp_backend::OutputType::Typst);
+        assert!(result[0].data.contains(tmpdir.path().to_str().unwrap()));
     }
 }

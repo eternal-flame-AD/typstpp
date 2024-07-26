@@ -113,7 +113,9 @@ pub async fn preprocess_typst<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
     driver.add_backend(
         "r".to_string(),
         Box::new(LanguageDriver::<typstpp_r::ROptions, _, _>::new(
-            typstpp_r::RBackend::new(()).await.unwrap(),
+            typstpp_r::RBackend::new(typstpp_r::RGlobalOptions::default())
+                .await
+                .unwrap(),
         )),
     );
     #[cfg(feature = "hs")]

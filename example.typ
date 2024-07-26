@@ -34,3 +34,29 @@ Then make a table:
 ```r
 knitr::kable(head(iris))
 ```
+
+Mix some code, plots and tables in the same chunk:
+
+```r
+factorial <- function(n) {
+  if (n == 0) {
+    return(1)
+  } else {
+    return(n * factorial(n - 1))
+  }
+}
+
+x <- 1:10
+y <- sapply(x, factorial)
+
+plot(x, y, type = "l")
+
+print("↑ base R plot ↓ ggplot2 plot")
+
+ggplot(data.frame(x = x, y = y), aes(x, y)) +
+  geom_line() +
+  labs(title = "Factorial function", x = "x", y = "y")
+
+knitr::kable(data.frame(x = x, y = y))
+
+```
