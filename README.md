@@ -45,5 +45,18 @@ See [example.out.pdf](example.out.pdf). For the final PDF output.
 
 ## TODO
 
-- [X] Better kable parsing
+### Backend
+
+- [X] Mix Haskell and R code
 - [ ] Inline code
+- [ ] Raw output
+
+### R
+
+- [X] Better kable parsing
+- [X] Mix of Graphics, Tables, and Text
+- [ ] Passing arbitrary arguments to knitr
+
+### Haskell
+
+- [ ] Remove the need for `:{` and `:}`
