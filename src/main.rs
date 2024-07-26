@@ -225,6 +225,7 @@ async fn main() {
                 .unwrap();
 
             loop {
+                log_process("Watching", &args.input);
                 select! {
                         _ = tokio::signal::ctrl_c() => {
                             debouncer.stop();
