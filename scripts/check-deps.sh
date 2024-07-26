@@ -7,9 +7,9 @@ mkdir -p ci-tmp
 ensure_cargo_bin() {
     if ! command -v "$1" &> /dev/null; then
         if [ -z "$2" ]; then
-            cargo install $2
+            (cd /tmp && cargo install $1)
         else
-            cargo install $1
+            (cd /tmp && cargo install $2)
         fi
     fi
 }
