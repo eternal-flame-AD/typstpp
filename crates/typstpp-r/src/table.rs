@@ -94,30 +94,30 @@ pub fn transform_tables(input: &str) -> String {
                 if line.trim().starts_with("```") {
                     state = State::Raw;
                     output.push_str(line);
-                    output.push_str("\n");
+                    output.push('\n');
                 } else if line.trim().starts_with('|') {
                     state = State::Table(line.to_string());
                 } else {
                     output.push_str(line);
-                    output.push_str("\n");
+                    output.push('\n');
                 }
             }
             State::Table(ref mut table) => {
                 if line.trim().starts_with('|') {
-                    table.push_str("\n");
+                    table.push('\n');
                     table.push_str(line);
                 } else {
-                    let table = MarkdownTable::parse(&table);
+                    let table = MarkdownTable::parse(table);
                     output.push_str(&table.to_typst_table());
-                    output.push_str("\n");
+                    output.push('\n');
                     output.push_str(line);
-                    output.push_str("\n");
+                    output.push('\n');
                     state = State::Normal;
                 }
             }
             State::Raw => {
                 output.push_str(line);
-                output.push_str("\n");
+                output.push('\n');
                 if line.trim().starts_with("```") {
                     state = State::Normal;
                 }

@@ -78,6 +78,15 @@ pub struct DocumentDriver<FO> {
     backends: HashMap<String, Box<dyn Preprocess<FO>>>,
 }
 
+impl<FO> Default for DocumentDriver<FO>
+where
+    FO: Display,
+ {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<FO> DocumentDriver<FO>
 where
     FO: Display,
@@ -197,7 +206,7 @@ pub async fn preprocess_typst<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
                                 .write_chunk(&source::Chunk::Code(CodeChunk {
                                     lang: c.lang.clone(),
                                     options: Default::default(),
-                                    code: o.data.into(),
+                                    code: o.data,
                                 }))
                                 .await?;
                         }

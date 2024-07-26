@@ -64,7 +64,7 @@ impl<R: AsyncRead + Unpin> InputFile for InputTypstFile<R> {
                 return Ok(Some(Chunk::Code(CodeChunk {
                     lang: lang.into(),
                     options: options.into_iter().collect(),
-                    code: code.into(),
+                    code,
                 })));
             } else {
                 return Ok(Some(Chunk::Verbatim(line)));

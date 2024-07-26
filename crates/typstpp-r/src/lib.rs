@@ -237,7 +237,7 @@ impl Backend for RBackend {
 
             let r = R_INITIALIZED
                 .get_or_init(|| async {
-                    if !std::env::var("R_HOME").is_ok() {
+                    if std::env::var("R_HOME").is_err() {
                         let out = Command::new("R")
                             .arg("-s")
                             .arg("-e")
@@ -370,7 +370,7 @@ mod tests {
             .pass(
                 "test",
                 typstpp_backend::Input {
-                    source: "print('hello')".into(),
+                    source: "print('hello')",
                     options: ROptions::default(),
                 },
             )
@@ -388,7 +388,7 @@ mod tests {
             .pass(
                 "test",
                 typstpp_backend::Input {
-                    source: "a <- 1+1\nprint(a)".into(),
+                    source: "a <- 1+1\nprint(a)",
                     options: ROptions::default(),
                 },
             )
@@ -407,7 +407,7 @@ mod tests {
             .pass(
                 "test",
                 typstpp_backend::Input {
-                    source: "a <- 1".into(),
+                    source: "a <- 1",
                     options: ROptions::default(),
                 },
             )
@@ -424,7 +424,7 @@ mod tests {
             .pass(
                 "test",
                 typstpp_backend::Input {
-                    source: "print(a)".into(),
+                    source: "print(a)",
                     options: ROptions::default(),
                 },
             )
@@ -444,7 +444,7 @@ mod tests {
             .pass(
                 "test",
                 typstpp_backend::Input {
-                    source: "print(a)".into(),
+                    source: "print(a)",
                     options: ROptions::default(),
                 },
             )
@@ -466,7 +466,7 @@ mod tests {
             .pass(
                 "test",
                 typstpp_backend::Input {
-                    source: "plot(1:10)\nprint('hello')\nplot(10:1)".into(),
+                    source: "plot(1:10)\nprint('hello')\nplot(10:1)",
                     options: ROptions::default(),
                 },
             )
