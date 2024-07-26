@@ -53,6 +53,24 @@ pub enum Error {
     RError(&'static str),
 }
 
+fn reindent(input: &str, output_from: String) -> String {
+    let first_line = match input.lines().next() {
+        Some(l) => l,
+        None => return output_from,
+    };
+    let indent = first_line
+        .chars()
+        .take_while(|c| c.is_whitespace())
+        .collect::<String>();
+    let mut output = String::new();
+    for line in output_from.lines() {
+        output.push_str(&indent);
+        output.push_str(line);
+        output.push('\n');
+    }
+    output
+}
+
 impl RBackend {
     pub fn new_cookie(&self) -> String {
         let mut rng = rand::thread_rng();
@@ -136,8 +154,10 @@ impl RBackend {
             String::from_utf8(CStr::from_ptr(result).to_bytes().to_vec()).unwrap()
         };
         let result = transform_tables(&result);
+        let result = result.replace("```\n]\n#src[\n```r\n", "");
+        let result = reindent(input.source, result);
         Ok(vec![typstpp_backend::Output {
-            data: result.replace("```\n]\n#src[\n```r\n", ""),
+            data: result,
             ty: typstpp_backend::OutputType::Typst,
         }])
     }
