@@ -178,7 +178,8 @@ async fn main() {
     let cli = CliArgs::parse();
     match cli.subcmd {
         SubCommand::Info => {
-            let supported_langs: Vec<&'static str> = Vec::new();
+            #[allow(unused_mut)]
+            let mut supported_langs: Vec<&'static str> = Vec::new();
             #[cfg(feature = "r")]
             supported_langs.push("r");
             #[cfg(feature = "hs")]

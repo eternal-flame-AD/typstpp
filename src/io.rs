@@ -24,51 +24,49 @@ impl<R: AsyncRead + Unpin> InputTypstFile<R> {
 
 impl<R: AsyncRead + Unpin> InputFile for InputTypstFile<R> {
     async fn read_chunk(&mut self) -> Result<Option<Chunk>, tokio::io::Error> {
-        loop {
-            let mut line = String::new();
-            let mut code = String::new();
-            let mut options = Vec::new();
+        let mut line = String::new();
+        let mut code = String::new();
+        let mut options = Vec::new();
 
-            let r = self.buffer.read_line(&mut line).await?;
-            if r == 0 {
-                return Ok(None);
-            }
+        let r = self.buffer.read_line(&mut line).await?;
+        if r == 0 {
+            return Ok(None);
+        }
 
-            if line.trim().starts_with("```") {
-                let lang = line.trim().strip_prefix("```").unwrap().trim();
-                // read options
-                let mut reading_options = true;
-                loop {
-                    let mut line = String::new();
-                    let r = self.buffer.read_line(&mut line).await?;
-                    if r == 0 {
-                        return Err(tokio::io::Error::other("unexpected EOF"));
-                    }
-                    if reading_options && line.trim().starts_with("#|") {
-                        let kv = line
-                            .trim()
-                            .strip_prefix("#|")
-                            .unwrap()
-                            .splitn(2, ':')
-                            .map(str::trim)
-                            .collect::<Vec<_>>();
-                        options.push((kv[0].to_string(), kv[1].to_string()));
-                    } else {
-                        reading_options = false;
-                        if line.trim().starts_with("```") {
-                            break;
-                        }
-                        code.push_str(&line);
-                    }
+        if line.trim().starts_with("```") {
+            let lang = line.trim().strip_prefix("```").unwrap().trim();
+            // read options
+            let mut reading_options = true;
+            loop {
+                let mut line = String::new();
+                let r = self.buffer.read_line(&mut line).await?;
+                if r == 0 {
+                    return Err(tokio::io::Error::other("unexpected EOF"));
                 }
-                return Ok(Some(Chunk::Code(CodeChunk {
-                    lang: lang.into(),
-                    options: options.into_iter().collect(),
-                    code,
-                })));
-            } else {
-                return Ok(Some(Chunk::Verbatim(line)));
+                if reading_options && line.trim().starts_with("#|") {
+                    let kv = line
+                        .trim()
+                        .strip_prefix("#|")
+                        .unwrap()
+                        .splitn(2, ':')
+                        .map(str::trim)
+                        .collect::<Vec<_>>();
+                    options.push((kv[0].to_string(), kv[1].to_string()));
+                } else {
+                    reading_options = false;
+                    if line.trim().starts_with("```") {
+                        break;
+                    }
+                    code.push_str(&line);
+                }
             }
+            Ok(Some(Chunk::Code(CodeChunk {
+                lang: lang.into(),
+                options: options.into_iter().collect(),
+                code,
+            })))
+        } else {
+            Ok(Some(Chunk::Verbatim(line)))
         }
     }
 }

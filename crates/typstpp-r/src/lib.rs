@@ -136,7 +136,7 @@ impl RBackend {
                             .map(|s| s.as_str().strip_suffix('/').unwrap_or(s))
                             .unwrap_or("figures"),
                     )
-                    .map(|s| format!("fig.path='{}'", format!("{}/typstpp-{}-", s, key))),
+                    .map(|s| format!("fig.path='{}/typstpp-{}-'", s, key)),
                 ]
                 .into_iter()
                 .flatten()

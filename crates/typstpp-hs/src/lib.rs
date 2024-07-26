@@ -49,7 +49,7 @@ impl Backend for HsBackend {
     type Error = Error;
 
     async fn new<'a>(
-        global_options: Self::GlobalOptions,
+        _global_options: Self::GlobalOptions,
     ) -> Result<Self, typstpp_backend::Error<Self::Error>>
     where
         Self: Sized,

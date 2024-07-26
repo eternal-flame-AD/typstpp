@@ -35,7 +35,7 @@ impl<O, FO, B: typstpp_backend::Backend> LanguageDriver<O, FO, B> {
 
 #[async_trait::async_trait]
 pub trait Preprocess<FO: Display> {
-    async fn preprocess(&mut self, input: &Vec<&CodeChunk>) -> Vec<CodeOutput<FO>>;
+    async fn preprocess<'a>(&mut self, input: &'a [&CodeChunk]) -> Vec<CodeOutput<FO>>;
 }
 
 #[async_trait::async_trait]
@@ -47,7 +47,7 @@ where
     <B as Backend>::Options: From<HashMap<String, String>>,
     typstpp_backend::Output<FO>: From<typstpp_backend::Output<<B as Backend>::Output>>,
 {
-    async fn preprocess(&mut self, input: &Vec<&CodeChunk>) -> Vec<CodeOutput<FO>> {
+    async fn preprocess<'a>(&mut self, input: &'a [&CodeChunk]) -> Vec<CodeOutput<FO>> {
         let input = input
             .iter()
             .map(|c| Input {
@@ -81,7 +81,7 @@ pub struct DocumentDriver<FO> {
 impl<FO> Default for DocumentDriver<FO>
 where
     FO: Display,
- {
+{
     fn default() -> Self {
         Self::new()
     }
