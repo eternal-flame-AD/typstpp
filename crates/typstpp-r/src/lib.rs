@@ -91,6 +91,7 @@ impl RBackend {
         Vec<typstpp_backend::Output<<Self as Backend>::Output>>,
         typstpp_backend::Error<<Self as Backend>::Error>,
     > {
+        let r_lock = R_LOCK.get().unwrap().lock().await;
         if !key
             .chars()
             .all(|c| c.is_alphanumeric() || " -_".contains(c))
@@ -172,6 +173,7 @@ impl RBackend {
             let result = Rf_translateCharUTF8(result);
             String::from_utf8(CStr::from_ptr(result).to_bytes().to_vec()).unwrap()
         };
+        drop(r_lock);
         let result = transform_tables(&result);
         let result = result.replace("```\n]\n#src[\n```r\n", "");
         let result = reindent(input.source, result);
@@ -211,6 +213,8 @@ impl From<HashMap<String, String>> for ROptions {
 static mut R_INITIALIZED: OnceCell<Result<(), typstpp_backend::Error<Error>>> =
     OnceCell::const_new();
 
+static R_LOCK: OnceCell<tokio::sync::Mutex<()>> = OnceCell::const_new();
+
 #[async_trait::async_trait]
 impl Backend for RBackend {
     type GlobalOptions = RGlobalOptions;
@@ -225,7 +229,13 @@ impl Backend for RBackend {
         Self: Sized,
     {
         unsafe {
-            R_INITIALIZED
+            let r_lock = R_LOCK
+                .get_or_init(|| async { tokio::sync::Mutex::new(()) })
+                .await
+                .lock()
+                .await;
+
+            let r = R_INITIALIZED
                 .get_or_init(|| async {
                     if !std::env::var("R_HOME").is_ok() {
                         let out = Command::new("R")
@@ -294,7 +304,11 @@ impl Backend for RBackend {
                 .await
                 .as_ref()
                 .map_err(|e| e.clone())
-                .map(|_| RBackend { global_options })
+                .map(|_| RBackend { global_options });
+
+            drop(r_lock);
+
+            r
         }
     }
 
