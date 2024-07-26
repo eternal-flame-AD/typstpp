@@ -1,0 +1,10 @@
+(MIT OR Apache-2.0) AND Unicode-DFS-2016 (1): unicode-ident
+0BSD OR Apache-2.0 OR MIT (1): adler
+Apache-2.0 (2): typstpp, typstpp-backend
+Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR MIT (1): wasi
+Apache-2.0 OR MIT (67): addr2line, anstream, anstyle, anstyle-parse, anstyle-query, anstyle-wincon, async-trait, autocfg, backtrace, bitflags, bitflags, cc, cfg-if, clap, clap_builder, clap_derive, clap_lex, colorchoice, crossbeam-channel, crossbeam-utils, file-id, filetime, gimli, heck, hermit-abi, libc, lock_api, log, notify-debouncer-full, num_cpus, object, parking_lot, parking_lot_core, pin-project-lite, proc-macro2, quote, rustc-demangle, scopeguard, signal-hook, signal-hook-mio, signal-hook-registry, smallvec, syn, thiserror, thiserror-impl, utf8parse, winapi, winapi-i686-pc-windows-gnu, winapi-x86_64-pc-windows-gnu, windows-sys, windows-sys, windows-targets, windows-targets, windows_aarch64_gnullvm, windows_aarch64_gnullvm, windows_aarch64_msvc, windows_aarch64_msvc, windows_i686_gnu, windows_i686_gnu, windows_i686_msvc, windows_i686_msvc, windows_x86_64_gnu, windows_x86_64_gnu, windows_x86_64_gnullvm, windows_x86_64_gnullvm, windows_x86_64_msvc, windows_x86_64_msvc
+Apache-2.0 OR MIT OR Zlib (1): miniz_oxide
+CC0-1.0 (1): notify
+ISC (2): inotify, inotify-sys
+MIT (11): bytes, crossterm, crossterm_winapi, fsevent-sys, kqueue, kqueue-sys, mio, redox_syscall, strsim, tokio, tokio-macros
+MIT OR Unlicense (4): memchr, same-file, walkdir, winapi-util

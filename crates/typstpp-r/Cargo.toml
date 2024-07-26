@@ -18,5 +18,4 @@ regex = "1.10.3"
 lazy_static = "1.4.0"
 
 [dev-dependencies]
-regex = "1.10.3"
 tempfile = "3.10.1"

@@ -60,3 +60,15 @@ See [example.out.pdf](example.out.pdf). For the final PDF output.
 ### Haskell
 
 - [ ] Remove the need for `:{` and `:}`
+
+## License
+
+This project is licensed under the Apache-2.0 license, see [LICENSE](LICENSE) for more information.
+
+### Dependency Licenses
+
+Licenses for dependencies:
+
+[Table of Dependencies w/SPDX identifiers](./LICENSE-dependencies)
+
+A mapping of licenses to their SPDX identifiers can be found [here](https://spdx.org/licenses/).
